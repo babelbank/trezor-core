@@ -135,8 +135,8 @@ async def set_input(state: State, src_entr: MoneroTransactionSourceEntry):
         vini_hmac=hmac_vini,
         pseudo_out=pseudo_out,
         pseudo_out_hmac=pseudo_out_hmac,
-        alpha_enc=alpha_enc,
-        spend_enc=spend_enc,
+        pseudo_out_alpha=alpha_enc,
+        spend_key=spend_enc,
     )
 
 

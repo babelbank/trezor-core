@@ -170,8 +170,6 @@ async def transaction_step(ctx, step, sub_step=None, sub_step_total=None):
     elif step == 500:
         info = ["Postprocessing..."]
     elif step == 600:
-        info = ["Postprocessing..."]
-    elif step == 700:
         info = ["Signing inputs", "%d/%d" % (sub_step + 1, sub_step_total)]
     else:
         info = ["Processing..."]

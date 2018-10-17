@@ -92,7 +92,7 @@ async def _sync_step(s, ctx, tds):
         # Encrypt with enc_key
         nonce, ciph, _ = chacha_poly.encrypt(s.enc_key, buff)
 
-        kis.append(MoneroExportedKeyImage(iv=nonce, blob=ciph, tag=b""))
+        kis.append(MoneroExportedKeyImage(iv=nonce, blob=ciph))
 
     return MoneroKeyImageSyncStepAck(kis=kis)
 

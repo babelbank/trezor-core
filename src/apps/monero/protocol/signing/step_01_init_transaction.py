@@ -40,8 +40,6 @@ async def init_transaction(
     state.mixin = tsx_data.mixin
     state.fee = tsx_data.fee
     state.account_idx = tsx_data.account
-    if tsx_data.is_multisig:
-        raise NotImplementedError("Multisig is not implemented")
 
     # Ensure change is correct
     _check_change(state, tsx_data.outputs)
@@ -96,13 +94,7 @@ async def init_transaction(
 
     rsig_data = MoneroTransactionRsigData(offload_type=state.rsig_offload)
 
-    return MoneroTransactionInitAck(
-        in_memory=False,
-        many_inputs=True,
-        many_outputs=True,
-        hmacs=hmacs,
-        rsig_data=rsig_data,
-    )
+    return MoneroTransactionInitAck(hmacs=hmacs, rsig_data=rsig_data)
 
 
 def _check_subaddresses(state: State, outputs: list):

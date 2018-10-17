@@ -73,7 +73,7 @@ def generate_mlsag_full(
         for j in range(rows):
             M[i][j] = crypto.decodepoint(pubs[i][j].dest)
             M[i][rows] = crypto.point_add(
-                M[i][rows], crypto.decodepoint(pubs[i][j].mask)
+                M[i][rows], crypto.decodepoint(pubs[i][j].commitment)
             )
 
     sk[rows] = crypto.sc_0()
@@ -126,7 +126,7 @@ def generate_mlsag_simple(message, pubs, in_sk, a, cout, kLRki, index):
 
     for i in range(cols):
         M[i][0] = crypto.decodepoint(pubs[i].dest)
-        M[i][1] = crypto.point_sub(crypto.decodepoint(pubs[i].mask), cout)
+        M[i][1] = crypto.point_sub(crypto.decodepoint(pubs[i].commitment), cout)
 
     return generate_mlsag(message, M, sk, kLRki, index, dsRows)
 

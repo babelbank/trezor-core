@@ -107,14 +107,6 @@ async def sign_tx_dispatch(state, msg):
 
         return (
             await step_07_all_outputs_set.all_outputs_set(state),
-            (MessageType.MoneroTransactionMlsagDoneRequest,),
-        )
-
-    elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionMlsagDoneRequest:
-        from apps.monero.protocol.signing import step_08_mlsag_done
-
-        return (
-            await step_08_mlsag_done.mlsag_done(state),
             (MessageType.MoneroTransactionSignInputRequest,),
         )
 
@@ -129,8 +121,8 @@ async def sign_tx_dispatch(state, msg):
                 msg.vini_hmac,
                 msg.pseudo_out,
                 msg.pseudo_out_hmac,
-                msg.alpha_enc,
-                msg.spend_enc,
+                msg.pseudo_out_alpha,
+                msg.spend_key,
             ),
             (
                 MessageType.MoneroTransactionSignInputRequest,

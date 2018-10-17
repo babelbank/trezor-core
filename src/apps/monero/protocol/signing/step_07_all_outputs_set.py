@@ -52,8 +52,19 @@ async def all_outputs_set(state: State):
         rv_type=misc.get_monero_rct_type(state.rct_type, state.rsig_type),
     )
 
+    _out_pk(state)
+    state.full_message_hasher.rctsig_base_done()
+    state.current_output_index = -1
+    state.current_input_index = -1
+
+    state.full_message = state.full_message_hasher.get_digest()
+    state.full_message_hasher = None
+
     return MoneroTransactionAllOutSetAck(
-        extra=extra_b, tx_prefix_hash=state.tx_prefix_hash, rv=rv_pb
+        extra=extra_b,
+        tx_prefix_hash=state.tx_prefix_hash,
+        rv=rv_pb,
+        full_message_hash=state.full_message,
     )
 
 
@@ -145,3 +156,14 @@ def _add_additional_tx_pub_keys_to_extra(tx_extra, pub_keys):
 
     tx_extra += buffer
     return tx_extra
+
+
+def _out_pk(state: State):
+    """
+    Hashes out_pk into the full message.
+    """
+    if state.output_count != len(state.output_pk_commitments):
+        raise ValueError("Invalid number of ecdh")
+
+    for out in state.output_pk_commitments:
+        state.full_message_hasher.set_out_pk_commitment(out)

@@ -119,7 +119,7 @@ async def sign_input(
     )
     state.assrt(
         crypto.point_eq(
-            crypto.decodepoint(src_entr.outputs[src_entr.real_output].key.mask),
+            crypto.decodepoint(src_entr.outputs[src_entr.real_output].key.commitment),
             crypto.gen_commitment(input_secret_key.mask, src_entr.amount),
         ),
         "Real source entry's mask does not equal spend key's",
@@ -162,7 +162,6 @@ async def sign_input(
 
     # Encode
     mgs = _recode_msg([mg])
-    cout = None
 
     gc.collect()
     state.mem_trace(6)
@@ -172,7 +171,7 @@ async def sign_input(
     )
 
     return MoneroTransactionSignInputAck(
-        signature=misc.dump_msg_gc(mgs[0], preallocate=488), cout=cout
+        signature=misc.dump_msg_gc(mgs[0], preallocate=488)
     )
 
 

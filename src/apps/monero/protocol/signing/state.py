@@ -22,8 +22,7 @@ class State:
     STEP_ALL_IN = const(350)
     STEP_OUT = const(400)
     STEP_ALL_OUT = const(500)
-    STEP_MLSAG = const(600)
-    STEP_SIGN = const(700)
+    STEP_SIGN = const(600)
 
     def __init__(self, ctx):
         from apps.monero.xmr.sub.keccak_hasher import KeccakXmrArchive
