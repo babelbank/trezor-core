@@ -9,7 +9,7 @@ from .state import State
 from apps.monero.controller import misc
 from apps.monero.layout import confirms
 from apps.monero.protocol.signing.rct_type import RctType
-from apps.monero.xmr import common, crypto
+from apps.monero.xmr import crypto
 
 if False:
     from trezor.messages.MoneroTransactionSourceEntry import (
@@ -61,7 +61,7 @@ async def sign_input(
     vini_hmac_comp = await hmac_encryption_keys.gen_hmac_vini(
         state.key_hmac, src_entr, vini_bin, input_position
     )
-    if not common.ct_equal(vini_hmac_comp, vini_hmac):
+    if not crypto.ct_equals(vini_hmac_comp, vini_hmac):
         raise ValueError("HMAC is not correct")
 
     gc.collect()
@@ -74,7 +74,7 @@ async def sign_input(
             hmac_encryption_keys.hmac_key_txin_comm(state.key_hmac, input_position),
             pseudo_out,
         )
-        if not common.ct_equal(pseudo_out_hmac_comp, pseudo_out_hmac):
+        if not crypto.ct_equals(pseudo_out_hmac_comp, pseudo_out_hmac):
             raise ValueError("HMAC is not correct")
 
         gc.collect()

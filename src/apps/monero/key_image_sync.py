@@ -1,16 +1,16 @@
 import gc
 
-from apps.monero.controller import misc
-from apps.monero.layout import confirms
-from apps.monero.xmr import crypto, key_image, monero
-from apps.monero.xmr.enc import chacha_poly
-
 from trezor import log, wire
 from trezor.messages import MessageType
 from trezor.messages.MoneroExportedKeyImage import MoneroExportedKeyImage
 from trezor.messages.MoneroKeyImageExportInitAck import MoneroKeyImageExportInitAck
 from trezor.messages.MoneroKeyImageSyncFinalAck import MoneroKeyImageSyncFinalAck
 from trezor.messages.MoneroKeyImageSyncStepAck import MoneroKeyImageSyncStepAck
+
+from apps.monero.controller import misc
+from apps.monero.layout import confirms
+from apps.monero.xmr import crypto, key_image, monero
+from apps.monero.xmr.enc import chacha_poly
 
 
 async def key_image_sync(ctx, msg):

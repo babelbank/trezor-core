@@ -14,6 +14,7 @@ NULL_KEY_ENC = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0
 
 
 random_bytes = random.bytes
+ct_equals = tcry.ct_equals
 
 
 def keccak_factory(data=None):

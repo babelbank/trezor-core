@@ -1,6 +1,6 @@
 from micropython import const
 
-from apps.monero.xmr import common, crypto
+from apps.monero.xmr import crypto
 
 if False:
     from apps.monero.xmr.types import *
@@ -9,9 +9,12 @@ if False:
 DISPLAY_DECIMAL_POINT = const(12)
 
 
-class XmrNoSuchAddressException(common.XmrException):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class XmrException(Exception):
+    pass
+
+
+class XmrNoSuchAddressException(XmrException):
+    pass
 
 
 def get_subaddress_secret_key(secret_key, index=None, major=None, minor=None):

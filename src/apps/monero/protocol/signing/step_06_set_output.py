@@ -12,7 +12,7 @@ from apps.monero.controller import misc
 from apps.monero.layout import confirms
 from apps.monero.protocol import hmac_encryption_keys
 from apps.monero.protocol.signing.rsig_type import RsigType
-from apps.monero.xmr import common, crypto
+from apps.monero.xmr import crypto
 
 
 async def set_output(state: State, dst_entr, dst_entr_hmac, rsig_data):
@@ -112,7 +112,7 @@ async def _validate(state: State, dst_entr, dst_entr_hmac):
     dst_entr_hmac_computed = await hmac_encryption_keys.gen_hmac_tsxdest(
         state.key_hmac, dst_entr, state.current_output_index
     )
-    if not common.ct_equal(dst_entr_hmac, dst_entr_hmac_computed):
+    if not crypto.ct_equals(dst_entr_hmac, dst_entr_hmac_computed):
         raise ValueError("HMAC invalid")
     del (dst_entr_hmac, dst_entr_hmac_computed)
     state.mem_trace(3, True)

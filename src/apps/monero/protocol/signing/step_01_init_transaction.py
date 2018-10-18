@@ -288,7 +288,7 @@ def _process_payment_id(state: State, tsx_data: MoneroTransactionData):
     See:
     - https://github.com/monero-project/monero/blob/ff7dc087ae5f7de162131cea9dbcf8eac7c126a1/src/cryptonote_basic/tx_extra.h
     """
-    if common.is_empty(tsx_data.payment_id):
+    if not tsx_data.payment_id:
         return
 
     # encrypted payment id

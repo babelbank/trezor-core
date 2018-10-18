@@ -1,11 +1,11 @@
-from apps.common.confirm import require_confirm, require_hold_to_confirm
-
 from trezor import ui
 from trezor.messages import ButtonRequestType
 from trezor.ui.text import Text
 from trezor.utils import chunks
 
 from . import common
+
+from apps.common.confirm import require_confirm, require_hold_to_confirm
 
 
 async def confirm_out(ctx, dst, is_change=False, creds=None, int_payment=None):
