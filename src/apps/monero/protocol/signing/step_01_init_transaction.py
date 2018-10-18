@@ -9,7 +9,7 @@ from apps.monero.layout import confirms
 from apps.monero.protocol.signing.rct_type import RctType
 from apps.monero.protocol.signing.rsig_type import RsigType
 from apps.monero.protocol.signing.state import State
-from apps.monero.xmr import common, crypto, monero
+from apps.monero.xmr import crypto, monero
 
 if False:
     from trezor.messages.MoneroTransactionData import MoneroTransactionData
