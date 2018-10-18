@@ -1,6 +1,6 @@
 from common import *
 
-from apps.monero.xmr import common, crypto, monero
+from apps.monero.xmr import crypto, monero
 from apps.monero.xmr.sub.addr import encode_addr
 from apps.monero.xmr.sub.xmr_net import net_version, NetworkTypes
 from apps.monero.xmr.sub.creds import AccountCreds
