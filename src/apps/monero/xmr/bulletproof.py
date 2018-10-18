@@ -1,5 +1,7 @@
 import gc
-from trezorutils import memcpy as _memcpy
+
+from trezor import utils
+from trezor.utils import memcpy as _memcpy
 
 from apps.monero.xmr import crypto
 from apps.monero.xmr.serialize.int_serialize import dump_uvarint_b_into, uvarint_size
@@ -929,10 +931,6 @@ class BulletProofBuilder:
         if self.gc_fnc:
             self.gc_fnc()
 
-    def assrt(self, cond, msg=None, *args, **kwargs):
-        if not cond:
-            raise ValueError(msg)
-
     def aX_vcts(self, sv, MN):
         num_inp = len(sv)
 
@@ -1026,8 +1024,8 @@ class BulletProofBuilder:
         return self.prove_batch([sv], [gamma], proof_v8=proof_v8)
 
     def prove_setup(self, sv, gamma, proof_v8=False):
-        self.assrt(len(sv) == len(gamma), "|sv| != |gamma|")
-        self.assrt(len(sv) > 0, "sv empty")
+        utils.ensure(len(sv) == len(gamma), "|sv| != |gamma|")
+        utils.ensure(len(sv) > 0, "sv empty")
 
         self.proof_sec = crypto.random_bytes(64)
         self._det_mask_init()
@@ -1368,17 +1366,17 @@ class BulletProofBuilder:
         """
         max_length = 0
         for proof in proofs:
-            self.assrt(is_reduced(proof.taux), "Input scalar not in range")
-            self.assrt(is_reduced(proof.mu), "Input scalar not in range")
-            self.assrt(is_reduced(proof.a), "Input scalar not in range")
-            self.assrt(is_reduced(proof.b), "Input scalar not in range")
-            self.assrt(is_reduced(proof.t), "Input scalar not in range")
-            self.assrt(len(proof.V) >= 1, "V does not have at least one element")
-            self.assrt(len(proof.L) == len(proof.R), "|L| != |R|")
-            self.assrt(len(proof.L) > 0, "Empty proof")
+            utils.ensure(is_reduced(proof.taux), "Input scalar not in range")
+            utils.ensure(is_reduced(proof.mu), "Input scalar not in range")
+            utils.ensure(is_reduced(proof.a), "Input scalar not in range")
+            utils.ensure(is_reduced(proof.b), "Input scalar not in range")
+            utils.ensure(is_reduced(proof.t), "Input scalar not in range")
+            utils.ensure(len(proof.V) >= 1, "V does not have at least one element")
+            utils.ensure(len(proof.L) == len(proof.R), "|L| != |R|")
+            utils.ensure(len(proof.L) > 0, "Empty proof")
             max_length = max(max_length, len(proof.L))
 
-        self.assrt(max_length < 32, "At least one proof is too large")
+        utils.ensure(max_length < 32, "At least one proof is too large")
 
         maxMN = 1 << max_length
         logN = 6
@@ -1405,7 +1403,7 @@ class BulletProofBuilder:
                 logM += 1
                 M = 1 << logM
 
-            self.assrt(len(proof.L) == 6 + logM, "Proof is not the expected size")
+            utils.ensure(len(proof.L) == 6 + logM, "Proof is not the expected size")
             MN = M * N
             weight_y = crypto.encodeint(crypto.random_scalar())
             weight_z = crypto.encodeint(crypto.random_scalar())
@@ -1413,15 +1411,15 @@ class BulletProofBuilder:
             # Reconstruct the challenges
             hash_cache = hash_vct_to_scalar(None, proof.V)
             y = hash_cache_mash(None, hash_cache, proof.A, proof.S)
-            self.assrt(y != ZERO, "y == 0")
+            utils.ensure(y != ZERO, "y == 0")
             z = hash_to_scalar(None, y)
             copy_key(hash_cache, z)
-            self.assrt(z != ZERO, "z == 0")
+            utils.ensure(z != ZERO, "z == 0")
 
             x = hash_cache_mash(None, hash_cache, z, proof.T1, proof.T2)
-            self.assrt(x != ZERO, "x == 0")
+            utils.ensure(x != ZERO, "x == 0")
             x_ip = hash_cache_mash(None, hash_cache, x, proof.taux, proof.mu, proof.t)
-            self.assrt(x_ip != ZERO, "x_ip == 0")
+            utils.ensure(x_ip != ZERO, "x_ip == 0")
 
             # PAPER LINE 61
             sc_mulsub(m_y0, proof.taux, weight_y, m_y0)
@@ -1431,7 +1429,7 @@ class BulletProofBuilder:
             ip1y = vector_power_sum(y, MN)
             sc_mulsub(k, zpow[2], ip1y, ZERO)
             for j in range(1, M + 1):
-                self.assrt(j + 2 < len(zpow), "invalid zpow index")
+                utils.ensure(j + 2 < len(zpow), "invalid zpow index")
                 sc_mulsub(k, zpow.to(j + 2), BP_IP12, k)
 
             # VERIFY_line_61rl_new
@@ -1471,7 +1469,7 @@ class BulletProofBuilder:
 
             # Compute the number of rounds for the inner product
             rounds = logM + logN
-            self.assrt(rounds > 0, "Zero rounds")
+            utils.ensure(rounds > 0, "Zero rounds")
 
             # PAPER LINES 21-22
             # The inner product challenges are computed per round
@@ -1479,7 +1477,7 @@ class BulletProofBuilder:
             for i in range(rounds):
                 hash_cache_mash(tmp_bf_0, hash_cache, proof.L[i], proof.R[i])
                 w.read(i, tmp_bf_0)
-                self.assrt(w[i] != ZERO, "w[i] == 0")
+                utils.ensure(w[i] != ZERO, "w[i] == 0")
 
             # Basically PAPER LINES 24-25
             # Compute the curvepoints from G[i] and H[i]
@@ -1513,8 +1511,8 @@ class BulletProofBuilder:
 
                 # Adjust the scalars using the exponents from PAPER LINE 62
                 sc_add(g_scalar, g_scalar, z)
-                self.assrt(2 + i // N < len(zpow), "invalid zpow index")
-                self.assrt(i % N < len(twoN), "invalid twoN index")
+                utils.ensure(2 + i // N < len(zpow), "invalid zpow index")
+                utils.ensure(i % N < len(twoN), "invalid twoN index")
                 sc_mul(tmp, zpow.to(2 + i // N), twoN.to(i % N))
                 sc_muladd(tmp, z, ypow, tmp)
                 sc_mulsub(h_scalar, tmp, yinvpow, h_scalar)

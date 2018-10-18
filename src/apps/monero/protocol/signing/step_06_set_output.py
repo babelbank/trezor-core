@@ -224,7 +224,7 @@ def _range_proof(state, amount, rsig_data):
         # thus direct serialization cannot be used.
         state.full_message_hasher.rsig_val(bp_obj, True, raw=False)
         res = range_signatures.verify_bp(bp_obj, state.output_amounts, masks)
-        state.assrt(res, "BP verification fail")
+        utils.ensure(res, "BP verification fail")
         state.mem_trace("BP verified" if __debug__ else None, collect=True)
         del (bp_obj, range_signatures)
 
@@ -370,7 +370,7 @@ def _set_out_derivation(state: State, dst_entr, additional_txkey_priv):
 
 
 def _check_out_commitment(state: State, amount, mask, C):
-    state.assrt(
+    utils.ensure(
         crypto.point_eq(
             C,
             crypto.point_add(crypto.scalarmult_base(mask), crypto.scalarmult_h(amount)),

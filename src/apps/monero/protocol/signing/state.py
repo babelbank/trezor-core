@@ -142,10 +142,5 @@ class State:
         if collect:
             gc.collect()
 
-    def assrt(self, condition, msg=None):
-        if condition:
-            return
-        raise ValueError("Assertion error%s" % (" : %s" % msg if msg else ""))
-
     def change_address(self):
         return self.output_change.addr if self.output_change else None

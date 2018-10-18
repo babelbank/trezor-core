@@ -6,6 +6,8 @@ The prefix hash is then complete.
 
 import gc
 
+from trezor import utils
+
 from .state import State
 
 from apps.monero.controller import misc
@@ -76,7 +78,7 @@ def _validate(state: State):
 
     # Test if \sum Alpha == \sum A
     if state.rct_type == RctType.Simple:
-        state.assrt(crypto.sc_eq(state.sumout, state.sumpouts_alphas))
+        utils.ensure(crypto.sc_eq(state.sumout, state.sumpouts_alphas))
 
     # Fee test
     if state.fee != (state.summary_inputs_money - state.summary_outs_money):

@@ -38,7 +38,7 @@ async def all_inputs_set(state: State):
         state.output_masks.append(cur_mask)
 
     if state.rct_type == RctType.Simple:
-        state.assrt(
+        utils.ensure(
             crypto.sc_eq(state.sumout, state.sumpouts_alphas), "Invalid masks sum"
         )  # sum check
     state.sumout = crypto.sc_init(0)

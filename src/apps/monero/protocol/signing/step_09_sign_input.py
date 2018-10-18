@@ -4,6 +4,8 @@ Generates a MLSAG signature for one input.
 
 import gc
 
+from trezor import utils
+
 from .state import State
 
 from apps.monero.controller import misc
@@ -110,14 +112,14 @@ async def sign_input(
     kLRki = None  # for multisig: src_entr.multisig_kLRki
 
     # Private key correctness test
-    state.assrt(
+    utils.ensure(
         crypto.point_eq(
             crypto.decodepoint(src_entr.outputs[src_entr.real_output].key.dest),
             crypto.scalarmult_base(input_secret_key.dest),
         ),
         "Real source entry's destination does not equal spend key's",
     )
-    state.assrt(
+    utils.ensure(
         crypto.point_eq(
             crypto.decodepoint(src_entr.outputs[src_entr.real_output].key.commitment),
             crypto.gen_commitment(input_secret_key.mask, src_entr.amount),
