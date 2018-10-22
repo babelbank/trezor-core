@@ -109,7 +109,7 @@ def generate_tx_spend_and_key_image(
     Corresponds to generate_key_image_helper_precomp() in the Monero codebase.
 
     :param ack: sender credentials
-    :type ack: apps.monero.xmr.sub.creds.AccountCreds
+    :type ack: apps.monero.xmr.credentials.AccountCreds
     :param out_key: real output (from input RCT) destination key
     :param recv_derivation:
     :param real_output_index:

@@ -8,11 +8,10 @@ from trezor import utils
 
 from .state import State
 
-from apps.monero.controller import misc
+from apps.monero import signing
 from apps.monero.layout import confirms
-from apps.monero.protocol import hmac_encryption_keys
-from apps.monero.protocol.signing.rsig_type import RsigType
-from apps.monero.xmr import crypto
+from apps.monero.signing import RsigType, offloading_keys
+from apps.monero.xmr import crypto, serialize
 
 
 async def set_output(state: State, dst_entr, dst_entr_hmac, rsig_data):
@@ -109,7 +108,7 @@ async def _validate(state: State, dst_entr, dst_entr_hmac):
         raise ValueError("Destination with wrong amount: %s" % dst_entr.amount)
 
     # HMAC check of the destination
-    dst_entr_hmac_computed = await hmac_encryption_keys.gen_hmac_tsxdest(
+    dst_entr_hmac_computed = await offloading_keys.gen_hmac_tsxdest(
         state.key_hmac, dst_entr, state.current_output_index
     )
     if not crypto.ct_equals(dst_entr_hmac, dst_entr_hmac_computed):
@@ -133,7 +132,7 @@ async def _set_out_tx_out(state: State, dst_entr, tx_out_key):
     state.mem_trace(9, True)
 
     # Hmac dst_entr
-    hmac_vouti = await hmac_encryption_keys.gen_hmac_vouti(
+    hmac_vouti = await offloading_keys.gen_hmac_vouti(
         state.key_hmac, dst_entr, tx_out_bin, state.current_output_index
     )
     state.mem_trace(10, True)
@@ -159,16 +158,16 @@ def _range_proof(state, amount, rsig_data):
     if rsig_data and rsig_data.rsig and len(rsig_data.rsig) > 0:
         provided_rsig = rsig_data.rsig
     if not state.rsig_offload and provided_rsig:
-        raise misc.TrezorError("Provided unexpected rsig")
+        raise signing.Error("Provided unexpected rsig")
 
     # Batching
     bidx = _get_rsig_batch(state, state.current_output_index)
     batch_size = state.rsig_grouping[bidx]
     last_in_batch = _is_last_in_batch(state, state.current_output_index, bidx)
     if state.rsig_offload and provided_rsig and not last_in_batch:
-        raise misc.TrezorError("Provided rsig too early")
+        raise signing.Error("Provided rsig too early")
     if state.rsig_offload and last_in_batch and not provided_rsig:
-        raise misc.TrezorError("Rsig expected, not provided")
+        raise signing.Error("Rsig expected, not provided")
 
     # Batch not finished, skip range sig generation now
     if not last_in_batch:
@@ -193,7 +192,7 @@ def _range_proof(state, amount, rsig_data):
         state.full_message_hasher.rsig_val(rsig, True, raw=False)
         state.mem_trace("post-bp-hash" if __debug__ else None, collect=True)
 
-        rsig = misc.dump_rsig_bp(rsig)
+        rsig = _dump_rsig_bp(rsig)
         state.mem_trace(
             "post-bp-ser, size: %s" % len(rsig) if __debug__ else None, collect=True
         )
@@ -216,7 +215,7 @@ def _range_proof(state, amount, rsig_data):
         masks = state.output_masks[
             1 + state.current_output_index - batch_size : 1 + state.current_output_index
         ]
-        bp_obj = misc.parse_msg(rsig_data.rsig, Bulletproof)
+        bp_obj = serialize.parse_msg(rsig_data.rsig, Bulletproof)
         rsig_data.rsig = None
 
         # BP is hashed with raw=False as hash does not contain L, R
@@ -230,12 +229,12 @@ def _range_proof(state, amount, rsig_data):
 
     elif state.rsig_type == RsigType.Borromean and state.rsig_offload:
         """Borromean offloading not supported"""
-        raise misc.TrezorError(
+        raise signing.Error(
             "Unsupported rsig state (Borromean offloaded is not supported)"
         )
 
     else:
-        raise misc.TrezorError("Unexpected rsig state")
+        raise signing.Error("Unexpected rsig state")
 
     state.mem_trace("rproof" if __debug__ else None, collect=True)
     if state.current_output_index + 1 == state.output_count:
@@ -243,6 +242,48 @@ def _range_proof(state, amount, rsig_data):
         state.output_amounts = []
         state.output_masks = []
     return rsig, mask
+
+
+def _dump_rsig_bp(rsig):
+    if len(rsig.L) > 127:
+        raise ValueError("Too large")
+
+    # Manual serialization as the generic purpose serialize.dump_msg_gc
+    # is more memory intensive which is not desired in the range proof section.
+
+    # BP: V, A, S, T1, T2, taux, mu, L, R, a, b, t
+    # Commitment vector V is not serialized
+    # Vector size under 127 thus varint occupies 1 B
+    buff_size = 32 * (9 + 2 * (len(rsig.L))) + 2
+    buff = bytearray(buff_size)
+
+    utils.memcpy(buff, 0, rsig.A, 0, 32)
+    utils.memcpy(buff, 32, rsig.S, 0, 32)
+    utils.memcpy(buff, 32 * 2, rsig.T1, 0, 32)
+    utils.memcpy(buff, 32 * 3, rsig.T2, 0, 32)
+    utils.memcpy(buff, 32 * 4, rsig.taux, 0, 32)
+    utils.memcpy(buff, 32 * 5, rsig.mu, 0, 32)
+
+    buff[32 * 6] = len(rsig.L)
+    offset = 32 * 6 + 1
+
+    for x in rsig.L:
+        utils.memcpy(buff, offset, x, 0, 32)
+        offset += 32
+
+    buff[offset] = len(rsig.R)
+    offset += 1
+
+    for x in rsig.R:
+        utils.memcpy(buff, offset, x, 0, 32)
+        offset += 32
+
+    utils.memcpy(buff, offset, rsig.a, 0, 32)
+    offset += 32
+    utils.memcpy(buff, offset, rsig.b, 0, 32)
+    offset += 32
+    utils.memcpy(buff, offset, rsig.t, 0, 32)
+    return buff
 
 
 def _return_rsig_data(rsig):
@@ -348,7 +389,7 @@ def _set_out_derivation(state: State, dst_entr, additional_txkey_priv):
     scalars, `s` is used in the context of subaddresses, but it's
     basically the same thing.
     """
-    from apps.monero.xmr.sub.addr import addr_eq
+    from apps.monero.xmr.addresses import addr_eq
 
     change_addr = state.change_address()
     if change_addr and addr_eq(dst_entr.addr, change_addr):

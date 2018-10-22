@@ -1,9 +1,9 @@
 import gc
 
-from trezor import log, utils
+from trezor import log, utils, wire
 from trezor.messages import MessageType
 
-from apps.monero.protocol.signing.state import State
+from apps.monero.signing.state import State
 
 
 async def sign_tx(ctx, received_msg):
@@ -34,7 +34,7 @@ async def sign_tx(ctx, received_msg):
 
 async def sign_tx_dispatch(state, msg):
     if msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionInitRequest:
-        from apps.monero.protocol.signing import step_01_init_transaction
+        from apps.monero.signing import step_01_init_transaction
 
         return (
             await step_01_init_transaction.init_transaction(
@@ -44,7 +44,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionSetInputRequest:
-        from apps.monero.protocol.signing import step_02_set_input
+        from apps.monero.signing import step_02_set_input
 
         return (
             await step_02_set_input.set_input(state, msg.src_entr),
@@ -55,7 +55,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionInputsPermutationRequest:
-        from apps.monero.protocol.signing import step_03_inputs_permutation
+        from apps.monero.signing import step_03_inputs_permutation
 
         return (
             await step_03_inputs_permutation.tsx_inputs_permutation(state, msg.perm),
@@ -63,7 +63,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionInputViniRequest:
-        from apps.monero.protocol.signing import step_04_input_vini
+        from apps.monero.signing import step_04_input_vini
 
         return (
             await step_04_input_vini.input_vini(
@@ -81,7 +81,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionAllInputsSetRequest:
-        from apps.monero.protocol.signing import step_05_all_inputs_set
+        from apps.monero.signing import step_05_all_inputs_set
 
         return (
             await step_05_all_inputs_set.all_inputs_set(state),
@@ -89,7 +89,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionSetOutputRequest:
-        from apps.monero.protocol.signing import step_06_set_output
+        from apps.monero.signing import step_06_set_output
 
         dst, dst_hmac, rsig_data = msg.dst_entr, msg.dst_entr_hmac, msg.rsig_data
         del msg
@@ -103,7 +103,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionAllOutSetRequest:
-        from apps.monero.protocol.signing import step_07_all_outputs_set
+        from apps.monero.signing import step_07_all_outputs_set
 
         return (
             await step_07_all_outputs_set.all_outputs_set(state),
@@ -111,7 +111,7 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionSignInputRequest:
-        from apps.monero.protocol.signing import step_09_sign_input
+        from apps.monero.signing import step_09_sign_input
 
         return (
             await step_09_sign_input.sign_input(
@@ -131,11 +131,9 @@ async def sign_tx_dispatch(state, msg):
         )
 
     elif msg.MESSAGE_WIRE_TYPE == MessageType.MoneroTransactionFinalRequest:
-        from apps.monero.protocol.signing import step_10_sign_final
+        from apps.monero.signing import step_10_sign_final
 
         return await step_10_sign_final.final_msg(state), None
 
     else:
-        from trezor import wire
-
         raise wire.DataError("Unknown message")

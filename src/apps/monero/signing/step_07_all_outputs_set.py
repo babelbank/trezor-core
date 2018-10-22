@@ -10,8 +10,8 @@ from trezor import utils
 
 from .state import State
 
-from apps.monero.controller import misc
 from apps.monero.layout import confirms
+from apps.monero.signing import get_monero_rct_type
 from apps.monero.xmr import crypto
 
 
@@ -51,7 +51,7 @@ async def all_outputs_set(state: State):
     rv_pb = MoneroRingCtSig(
         txn_fee=state.fee,
         message=state.tx_prefix_hash,
-        rv_type=misc.get_monero_rct_type(state.rct_type, state.rsig_type),
+        rv_type=get_monero_rct_type(state.rct_type, state.rsig_type),
     )
 
     _out_pk(state)
@@ -71,7 +71,7 @@ async def all_outputs_set(state: State):
 
 
 def _validate(state: State):
-    from apps.monero.protocol.signing.rct_type import RctType
+    from apps.monero.signing import RctType
 
     if state.current_output_index + 1 != state.output_count:
         raise ValueError("Invalid out num")

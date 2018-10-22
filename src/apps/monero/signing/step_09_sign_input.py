@@ -8,10 +8,9 @@ from trezor import utils
 
 from .state import State
 
-from apps.monero.controller import misc
 from apps.monero.layout import confirms
-from apps.monero.protocol.signing.rct_type import RctType
-from apps.monero.xmr import crypto
+from apps.monero.signing import RctType
+from apps.monero.xmr import crypto, serialize
 
 if False:
     from trezor.messages.MoneroTransactionSourceEntry import (
@@ -41,7 +40,7 @@ async def sign_input(
     :param spend_enc: one time address spending private key. Encrypted.
     :return: Generated signature MGs[i]
     """
-    from apps.monero.protocol import hmac_encryption_keys
+    from apps.monero.signing import offloading_keys
 
     await confirms.transaction_step(
         state.ctx, state.STEP_SIGN, state.current_input_index + 1, state.input_count
@@ -60,7 +59,7 @@ async def sign_input(
     input_position = state.source_permutation[state.current_input_index]
 
     # Check input's HMAC
-    vini_hmac_comp = await hmac_encryption_keys.gen_hmac_vini(
+    vini_hmac_comp = await offloading_keys.gen_hmac_vini(
         state.key_hmac, src_entr, vini_bin, input_position
     )
     if not crypto.ct_equals(vini_hmac_comp, vini_hmac):
@@ -73,7 +72,7 @@ async def sign_input(
         # both pseudo_out and its mask were offloaded so we need to
         # validate pseudo_out's HMAC and decrypt the alpha
         pseudo_out_hmac_comp = crypto.compute_hmac(
-            hmac_encryption_keys.hmac_key_txin_comm(state.key_hmac, input_position),
+            offloading_keys.hmac_key_txin_comm(state.key_hmac, input_position),
             pseudo_out,
         )
         if not crypto.ct_equals(pseudo_out_hmac_comp, pseudo_out_hmac):
@@ -82,23 +81,23 @@ async def sign_input(
         gc.collect()
         state.mem_trace(2)
 
-        from apps.monero.xmr.enc import chacha_poly
+        from apps.monero.xmr.crypto import chacha_poly
 
         pseudo_out_alpha = crypto.decodeint(
             chacha_poly.decrypt_pack(
-                hmac_encryption_keys.enc_key_txin_alpha(state.key_enc, input_position),
+                offloading_keys.enc_key_txin_alpha(state.key_enc, input_position),
                 bytes(pseudo_out_alpha_enc),
             )
         )
         pseudo_out_c = crypto.decodepoint(pseudo_out)
 
     # Spending secret
-    from apps.monero.xmr.enc import chacha_poly
+    from apps.monero.xmr.crypto import chacha_poly
     from apps.monero.xmr.serialize_messages.ct_keys import CtKey
 
     spend_key = crypto.decodeint(
         chacha_poly.decrypt_pack(
-            hmac_encryption_keys.enc_key_spend(state.key_enc, input_position),
+            offloading_keys.enc_key_spend(state.key_enc, input_position),
             bytes(spend_enc),
         )
     )
@@ -173,7 +172,7 @@ async def sign_input(
     )
 
     return MoneroTransactionSignInputAck(
-        signature=misc.dump_msg_gc(mgs[0], preallocate=488)
+        signature=serialize.dump_msg_gc(mgs[0], preallocate=488)
     )
 
 

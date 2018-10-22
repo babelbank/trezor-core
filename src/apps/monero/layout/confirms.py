@@ -25,7 +25,7 @@ async def require_confirm_transaction(ctx, tsx_data, network_type):
     """
     Ask for confirmation from user.
     """
-    from apps.monero.xmr.sub.addr import get_change_addr_idx
+    from apps.monero.xmr.addresses import get_change_addr_idx
 
     outputs = tsx_data.outputs
     change_idx = get_change_addr_idx(outputs, tsx_data.change_dts)
@@ -59,8 +59,8 @@ async def _require_confirm_output(ctx, dst, network_type, payment_id):
     """
     Single transaction destination confirmation
     """
-    from apps.monero.xmr.sub.addr import encode_addr
-    from apps.monero.xmr.sub.xmr_net import net_version
+    from apps.monero.xmr.addresses import encode_addr
+    from apps.monero.xmr.networks import net_version
 
     version = net_version(network_type, dst.is_subaddress, payment_id is not None)
     addr = encode_addr(

@@ -1,4 +1,5 @@
 from apps.monero.xmr import crypto
+from apps.monero.xmr.keccak_hasher import KeccakXmrArchive
 
 
 class PreMlsagHasher:
@@ -7,8 +8,6 @@ class PreMlsagHasher:
     """
 
     def __init__(self):
-        from apps.monero.xmr.sub.keccak_hasher import KeccakXmrArchive
-
         self.is_simple = None
         self.state = 0
         self.kc_master = crypto.get_keccak()

@@ -13,7 +13,7 @@ from trezor.messages.MoneroTransactionFinalAck import MoneroTransactionFinalAck
 from .state import State
 
 from apps.monero.xmr import crypto
-from apps.monero.xmr.enc import chacha_poly
+from apps.monero.xmr.crypto import chacha_poly
 
 
 async def final_msg(state: State):

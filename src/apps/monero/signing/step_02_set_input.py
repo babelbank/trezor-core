@@ -13,10 +13,9 @@ key derived for exactly this purpose.
 """
 from .state import State
 
-from apps.monero.controller import misc
 from apps.monero.layout import confirms
-from apps.monero.protocol.signing.rct_type import RctType
-from apps.monero.xmr import crypto, monero
+from apps.monero.signing import RctType
+from apps.monero.xmr import crypto, monero, serialize
 
 if False:
     from trezor.messages.MoneroTransactionSourceEntry import (
@@ -28,9 +27,9 @@ async def set_input(state: State, src_entr: MoneroTransactionSourceEntry):
     from trezor.messages.MoneroTransactionSetInputAck import (
         MoneroTransactionSetInputAck,
     )
-    from apps.monero.xmr.enc import chacha_poly
+    from apps.monero.xmr.crypto import chacha_poly
     from apps.monero.xmr.serialize_messages.tx_prefix import TxinToKey
-    from apps.monero.protocol import hmac_encryption_keys
+    from apps.monero.signing import offloading_keys
 
     state.current_input_index += 1
 
@@ -86,11 +85,11 @@ async def set_input(state: State, src_entr: MoneroTransactionSourceEntry):
     The binary `vini_bin` is later sent to step 4 and 9 with its hmac,
     where it is checked and directly used.
     """
-    vini_bin = misc.dump_msg(vini, preallocate=64, prefix=b"\x02")
+    vini_bin = serialize.dump_msg(vini, preallocate=64, prefix=b"\x02")
     state.mem_trace(2, True)
 
     # HMAC(T_in,i || vin_i)
-    hmac_vini = await hmac_encryption_keys.gen_hmac_vini(
+    hmac_vini = await offloading_keys.gen_hmac_vini(
         state.key_hmac, src_entr, vini_bin, state.current_input_index
     )
     state.mem_trace(3, True)
@@ -106,20 +105,20 @@ async def set_input(state: State, src_entr: MoneroTransactionSourceEntry):
 
         # In full version the alpha is encrypted and passed back for storage
         pseudo_out_hmac = crypto.compute_hmac(
-            hmac_encryption_keys.hmac_key_txin_comm(
+            offloading_keys.hmac_key_txin_comm(
                 state.key_hmac, state.current_input_index
             ),
             pseudo_out,
         )
         alpha_enc = chacha_poly.encrypt_pack(
-            hmac_encryption_keys.enc_key_txin_alpha(
+            offloading_keys.enc_key_txin_alpha(
                 state.key_enc, state.current_input_index
             ),
             crypto.encodeint(alpha),
         )
 
     spend_enc = chacha_poly.encrypt_pack(
-        hmac_encryption_keys.enc_key_spend(state.key_enc, state.current_input_index),
+        offloading_keys.enc_key_spend(state.key_enc, state.current_input_index),
         crypto.encodeint(xi),
     )
 

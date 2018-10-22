@@ -1,6 +1,6 @@
 from apps.monero.xmr import crypto
-from apps.monero.xmr.sub.addr import encode_addr
-from apps.monero.xmr.sub.xmr_net import NetworkTypes, net_version
+from apps.monero.xmr.addresses import encode_addr
+from apps.monero.xmr.networks import NetworkTypes, net_version
 
 
 class AccountCreds:

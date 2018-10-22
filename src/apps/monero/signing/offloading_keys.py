@@ -88,7 +88,7 @@ async def gen_hmac_vini(key, src_entr, vini_bin, idx: int) -> bytes:
     Computes hmac (TxSourceEntry[i] || tx.vin[i])
     """
     import protobuf
-    from apps.monero.xmr.sub.keccak_hasher import get_keccak_writer
+    from apps.monero.xmr.keccak_hasher import get_keccak_writer
 
     kwriter = get_keccak_writer()
     await protobuf.dump_message(kwriter, src_entr)
@@ -104,7 +104,7 @@ async def gen_hmac_vouti(key, dst_entr, tx_out_bin, idx: int) -> bytes:
     Generates HMAC for (TxDestinationEntry[i] || tx.vout[i])
     """
     import protobuf
-    from apps.monero.xmr.sub.keccak_hasher import get_keccak_writer
+    from apps.monero.xmr.keccak_hasher import get_keccak_writer
 
     kwriter = get_keccak_writer()
     await protobuf.dump_message(kwriter, dst_entr)
@@ -120,7 +120,7 @@ async def gen_hmac_tsxdest(key, dst_entr, idx: int) -> bytes:
     Generates HMAC for TxDestinationEntry[i]
     """
     import protobuf
-    from apps.monero.xmr.sub.keccak_hasher import get_keccak_writer
+    from apps.monero.xmr.keccak_hasher import get_keccak_writer
 
     kwriter = get_keccak_writer()
     await protobuf.dump_message(kwriter, dst_entr)

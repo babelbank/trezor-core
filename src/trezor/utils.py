@@ -63,11 +63,20 @@ def format_ordinal(number):
 
 class HashWriter:
     def __init__(self, hashfunc, *hashargs, **hashkwargs):
-        self.ctx = hashfunc(*hashargs, **hashkwargs)
+        if callable(hashfunc):
+            self.ctx = hashfunc(*hashargs, **hashkwargs)
+        else:
+            self.ctx = hashfunc
         self.buf = bytearray(1)  # used in append()
 
     def extend(self, buf: bytearray):
         self.ctx.update(buf)
+
+    def write(self, buf: bytearray):  # alias for extend()
+        self.ctx.update(buf)
+
+    async def awrite(self, buf: bytearray):  # AsyncWriter interface
+        return self.ctx.update(buf)
 
     def append(self, b: int):
         self.buf[0] = b

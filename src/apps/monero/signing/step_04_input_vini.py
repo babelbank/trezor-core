@@ -7,9 +7,7 @@ Also hashes `pseudo_out` to the final_message.
 from .state import State
 
 from apps.monero.layout import confirms
-from apps.monero.protocol import hmac_encryption_keys
-from apps.monero.protocol.signing.rct_type import RctType
-from apps.monero.protocol.signing.rsig_type import RsigType
+from apps.monero.signing import RctType, RsigType, offloading_keys
 from apps.monero.xmr import crypto
 
 if False:
@@ -39,7 +37,7 @@ async def input_vini(
     state.current_input_index += 1
 
     # HMAC(T_in,i || vin_i)
-    hmac_vini_comp = await hmac_encryption_keys.gen_hmac_vini(
+    hmac_vini_comp = await offloading_keys.gen_hmac_vini(
         state.key_hmac,
         src_entr,
         vini_bin,
@@ -67,7 +65,7 @@ def _hash_vini_pseudo_out(state: State, pseudo_out: bytes, pseudo_out_hmac: byte
     """
     idx = state.source_permutation[state.current_input_index]
     pseudo_out_hmac_comp = crypto.compute_hmac(
-        hmac_encryption_keys.hmac_key_txin_comm(state.key_hmac, idx), pseudo_out
+        offloading_keys.hmac_key_txin_comm(state.key_hmac, idx), pseudo_out
     )
     if not crypto.ct_equals(pseudo_out_hmac, pseudo_out_hmac_comp):
         raise ValueError("HMAC invalid for pseudo outs")

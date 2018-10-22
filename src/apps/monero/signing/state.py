@@ -25,8 +25,8 @@ class State:
     STEP_SIGN = const(600)
 
     def __init__(self, ctx):
-        from apps.monero.xmr.sub.keccak_hasher import KeccakXmrArchive
-        from apps.monero.xmr.sub.mlsag_hasher import PreMlsagHasher
+        from apps.monero.xmr.keccak_hasher import KeccakXmrArchive
+        from apps.monero.xmr.mlsag_hasher import PreMlsagHasher
 
         self.ctx = ctx
 

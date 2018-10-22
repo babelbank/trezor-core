@@ -1,9 +1,9 @@
 from common import *
 
 from apps.monero.xmr import crypto, monero
-from apps.monero.xmr.sub.addr import encode_addr
-from apps.monero.xmr.sub.xmr_net import net_version, NetworkTypes
-from apps.monero.xmr.sub.creds import AccountCreds
+from apps.monero.xmr.addresses import encode_addr
+from apps.monero.xmr.credentials import AccountCreds
+from apps.monero.xmr.networks import NetworkTypes, net_version
 
 
 class TestMoneroCrypto(unittest.TestCase):
@@ -168,10 +168,14 @@ class TestMoneroCrypto(unittest.TestCase):
 
         w = AccountCreds.new_wallet(
             crypto.decodeint(
-                unhexlify(b"4ce88c168e0f5f8d6524f712d5f8d7d83233b1e7a2a60b5aba5206cc0ea2bc08")
+                unhexlify(
+                    b"4ce88c168e0f5f8d6524f712d5f8d7d83233b1e7a2a60b5aba5206cc0ea2bc08"
+                )
             ),
             crypto.decodeint(
-                unhexlify(b"f2644a3dd97d43e87887e74d1691d52baa0614206ad1b0c239ff4aa3b501750a")
+                unhexlify(
+                    b"f2644a3dd97d43e87887e74d1691d52baa0614206ad1b0c239ff4aa3b501750a"
+                )
             ),
             network_type=NetworkTypes.TESTNET,
         )
@@ -201,7 +205,9 @@ class TestMoneroCrypto(unittest.TestCase):
 
     def test_get_subaddress_secret_key(self):
         a = crypto.decodeint(
-            unhexlify(b"4ce88c168e0f5f8d6524f712d5f8d7d83233b1e7a2a60b5aba5206cc0ea2bc08")
+            unhexlify(
+                b"4ce88c168e0f5f8d6524f712d5f8d7d83233b1e7a2a60b5aba5206cc0ea2bc08"
+            )
         )
         m = monero.get_subaddress_secret_key(secret_key=a, major=0, minor=1)
         self.assertEqual(

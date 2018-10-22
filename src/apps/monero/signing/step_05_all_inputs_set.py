@@ -8,7 +8,7 @@ from trezor import utils
 from .state import State
 
 from apps.monero.layout import confirms
-from apps.monero.protocol.signing.rct_type import RctType
+from apps.monero.signing import RctType
 from apps.monero.xmr import crypto
 
 

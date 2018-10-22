@@ -4,11 +4,10 @@ Initializes a new transaction.
 
 import gc
 
-from apps.monero.controller import misc
+from apps.monero import misc, signing
 from apps.monero.layout import confirms
-from apps.monero.protocol.signing.rct_type import RctType
-from apps.monero.protocol.signing.rsig_type import RsigType
-from apps.monero.protocol.signing.state import State
+from apps.monero.signing import RctType, RsigType
+from apps.monero.signing.state import State
 from apps.monero.xmr import crypto, monero
 
 if False:
@@ -19,9 +18,9 @@ if False:
 async def init_transaction(
     state: State, address_n: list, network_type: int, tsx_data: MoneroTransactionData
 ):
-    from apps.monero.protocol import hmac_encryption_keys
+    from apps.monero.signing import offloading_keys
 
-    state.creds = await misc.monero_get_creds(state.ctx, address_n, network_type)
+    state.creds = await misc.get_creds(state.ctx, address_n, network_type)
     state.fee = state.fee if state.fee > 0 else 0
     state.tx_priv = crypto.random_scalar()
     state.tx_pub = crypto.scalarmult_base(state.tx_priv)
@@ -49,7 +48,7 @@ async def init_transaction(
     # At least two outpus are required, this applies also for sweep txs
     # where one fake output is added. See _check_change for more info
     if state.output_count < 2:
-        raise misc.TrezorNotEnoughOutputs("At least two outputs are required")
+        raise signing.NotEnoughOutputsError("At least two outputs are required")
 
     _check_rsig_data(state, tsx_data.rsig_data)
     _check_subaddresses(state, tsx_data.outputs)
@@ -70,7 +69,7 @@ async def init_transaction(
     # Final message hasher
     state.full_message_hasher.init(state.rct_type == RctType.Simple)
     state.full_message_hasher.set_type_fee(
-        misc.get_monero_rct_type(state.rct_type, state.rsig_type), state.fee
+        signing.get_monero_rct_type(state.rct_type, state.rsig_type), state.fee
     )
 
     # Sub address precomputation
@@ -83,7 +82,7 @@ async def init_transaction(
     # and trezor validates it.
     hmacs = []
     for idx in range(state.output_count):
-        c_hmac = await hmac_encryption_keys.gen_hmac_tsxdest(
+        c_hmac = await offloading_keys.gen_hmac_tsxdest(
             state.key_hmac, tsx_data.outputs[idx], idx
         )
         hmacs.append(c_hmac)
@@ -121,7 +120,7 @@ def _check_subaddresses(state: State, outputs: list):
     - https://lab.getmonero.org/pubs/MRL-0006.pdf
     - https://github.com/monero-project/monero/pull/2056
     """
-    from apps.monero.xmr.sub.addr import classify_subaddresses
+    from apps.monero.xmr.addresses import classify_subaddresses
 
     # let's first figure out what kind of destinations we have
     num_stdaddresses, num_subaddresses, single_dest_subaddress = classify_subaddresses(
@@ -217,7 +216,7 @@ def _check_change(state: State, outputs: list):
     So, although we could probably optimize this by having the change output in `change_dts`
     only, we intentionally do not do so.
     """
-    from apps.monero.xmr.sub.addr import addr_eq, get_change_addr_idx
+    from apps.monero.xmr.addresses import addr_eq, get_change_addr_idx
 
     change_index = get_change_addr_idx(outputs, state.output_change)
 
@@ -244,11 +243,11 @@ def _check_change(state: State, outputs: list):
             break
 
     if not found:
-        raise misc.TrezorChangeAddressError("Change address not found in outputs")
+        raise signing.ChangeAddressError("Change address not found in outputs")
 
     my_addr = _get_primary_change_address(state)
     if not addr_eq(my_addr, change_addr):
-        raise misc.TrezorChangeAddressError("Change address differs from ours")
+        raise signing.ChangeAddressError("Change address differs from ours")
 
 
 async def _compute_sec_keys(state: State, tsx_data: MoneroTransactionData):
@@ -256,7 +255,7 @@ async def _compute_sec_keys(state: State, tsx_data: MoneroTransactionData):
     Generate master key H( H(TsxData || tx_priv) || rand )
     """
     import protobuf
-    from apps.monero.xmr.sub.keccak_hasher import get_keccak_writer
+    from apps.monero.xmr.keccak_hasher import get_keccak_writer
 
     writer = get_keccak_writer()
     await protobuf.dump_message(writer, tsx_data)
@@ -333,7 +332,7 @@ def _get_key_for_payment_id_encryption(destinations: list, change_addr=None):
     Returns destination address public view key to be used for
     payment id encryption.
     """
-    from apps.monero.xmr.sub.addr import addr_eq
+    from apps.monero.xmr.addresses import addr_eq
     from trezor.messages.MoneroAccountPublicAddress import MoneroAccountPublicAddress
 
     addr = MoneroAccountPublicAddress(
