@@ -8,13 +8,10 @@ so we can recover it just from the transaction and the spend key.
 The private tx keys are used in other numerous Monero features.
 """
 
-import gc
-
 from trezor.messages.MoneroTransactionFinalAck import MoneroTransactionFinalAck
 
 from .state import State
 
-from apps.monero.layout import confirms
 from apps.monero.xmr import crypto
 from apps.monero.xmr.enc import chacha_poly
 
@@ -28,9 +25,6 @@ async def final_msg(state: State):
         [crypto.encodeint(x) for x in state.additional_tx_private_keys]
     )
     tx_enc_keys = chacha_poly.encrypt_pack(tx_key, key_buff)
-
-    await confirms.transaction_finished(state.ctx)
-    gc.collect()
 
     return MoneroTransactionFinalAck(
         cout_key=None, salt=salt, rand_mult=rand_mult, tx_enc_keys=tx_enc_keys

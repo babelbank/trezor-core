@@ -29,7 +29,9 @@ async def init_transaction(
     state.mem_trace(1)
 
     # Ask for confirmation
-    await confirms.confirm_transaction(state.ctx, tsx_data, state.creds)
+    await confirms.require_confirm_transaction(
+        state.ctx, tsx_data, state.creds.network_type
+    )
     gc.collect()
     state.mem_trace(3)
 

@@ -1,4 +1,4 @@
-from trezor import ui
+from trezor import res, ui
 from trezor.messages import ButtonRequestType
 from trezor.ui.text import Text
 from trezor.utils import chunks
@@ -45,6 +45,7 @@ async def tx_dialog(
     from trezor.ui.scroll import Scrollpage
 
     await ctx.call(ButtonRequest(code=code), MessageType.ButtonAck)
+
     dialog = ConfirmDialog(
         content,
         cancel=cancel_btn,
@@ -52,7 +53,6 @@ async def tx_dialog(
         cancel_style=cancel_style,
         confirm_style=confirm_style,
     )
-
     if scroll_tuple and scroll_tuple[1] > 1:
         dialog = Scrollpage(dialog, scroll_tuple[0], scroll_tuple[1])
 
@@ -62,7 +62,6 @@ async def tx_dialog(
 async def naive_pagination(
     ctx, lines, title, icon=ui.ICON_RESET, icon_color=ui.ORANGE, per_page=5
 ):
-    from trezor import res
     from trezor.ui.confirm import CANCELLED, CONFIRMED, DEFAULT_CANCEL, DEFAULT_CONFIRM
 
     if isinstance(lines, (list, tuple)):
@@ -112,27 +111,6 @@ async def naive_pagination(
             cur_step -= 1
         elif reaction == CONFIRMED:
             cur_step += 1
-
-
-@ui.layout
-async def ui_text(text, tm=None) -> None:
-    from trezor import loop
-
-    text.render()
-
-    if tm is not None:
-        await loop.sleep(tm)
-
-
-async def simple_text(text, tm=None) -> None:
-    from trezor import loop
-    from trezor.ui import display
-
-    display.clear()
-    text.render()
-
-    if tm is not None:
-        await loop.sleep(tm)
 
 
 def format_amount(value):
