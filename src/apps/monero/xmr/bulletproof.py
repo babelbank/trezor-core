@@ -856,7 +856,7 @@ def is_reduced(sc):
 class MultiExpSequential:
     """
     MultiExp object similar to MultiExp array of [(scalar, point), ]
-    MultiExp computes simply: res = \sum_i scalar_i * point_i
+    MultiExp computes simply: res = \\sum_i scalar_i * point_i
     Straus / Pippenger algorithms are implemented in the original Monero C++ code for the speed
     but the memory cost is around 1 MB which is not affordable here in HW devices.
 
